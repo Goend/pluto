@@ -14,7 +14,9 @@
 
 package api
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Column is an interface for printing columns
 type column interface {
@@ -39,6 +41,9 @@ var PossibleColumnNames = []string{
 	"COMPONENT",
 	"REPL AVAIL",
 	"REPL AVAIL IN",
+	"CELS",
+	"MESSAGES",
+	"FIELDS",
 }
 
 var possibleColumns = []column{
@@ -55,6 +60,9 @@ var possibleColumns = []column{
 	new(filepath),
 	new(replacementAvailable),
 	new(replacementAvailableIn),
+	new(cels),
+	new(messages),
+	new(field),
 }
 
 // name is the output name
@@ -149,6 +157,27 @@ func (rai replacementAvailableIn) value(output *Output) string {
 	return output.APIVersion.ReplacementAvailableIn
 }
 
+type cels struct{}
+
+func (cs cels) header() string { return "CELS" }
+func (cs cels) value(output *Output) string {
+	return fmt.Sprintf("[%v]", output.Cels)
+}
+
+type messages struct{}
+
+func (ms messages) header() string { return "Messages" }
+func (ms messages) value(output *Output) string {
+	return fmt.Sprintf("[%s]", output.Messages)
+}
+
+type field struct{}
+
+func (ms field) header() string { return "FIELDS" }
+func (ms field) value(output *Output) string {
+	return fmt.Sprintf("[%+v]", output.FieldVersions)
+}
+
 // normalColumns returns the list of columns for -onormal
 func (instance *Instance) normalColumns() columnList {
 	columnList := columnList{
@@ -159,6 +188,9 @@ func (instance *Instance) normalColumns() columnList {
 		4: new(removed),
 		5: new(deprecated),
 		6: new(replacementAvailable),
+		7: new(cels),
+		8: new(messages),
+		9: new(field),
 	}
 	return columnList
 }
@@ -177,6 +209,9 @@ func (instance *Instance) wideColumns() columnList {
 		8:  new(removedIn),
 		9:  new(replacementAvailable),
 		10: new(replacementAvailableIn),
+		11: new(cels),
+		12: new(messages),
+		13: new(field),
 	}
 	return columnList
 }

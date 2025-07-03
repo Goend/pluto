@@ -37,6 +37,7 @@ import (
 
 	"github.com/fairwindsops/pluto/v5/pkg/api"
 	discoveryapi "github.com/fairwindsops/pluto/v5/pkg/discovery-api"
+	discoveryresourcefield "github.com/fairwindsops/pluto/v5/pkg/discovery-resourcefield"
 	"github.com/fairwindsops/pluto/v5/pkg/finder"
 	"github.com/fairwindsops/pluto/v5/pkg/helm"
 	"golang.org/x/mod/semver"
@@ -44,6 +45,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
 )
 
@@ -51,6 +53,8 @@ var (
 	version                       string
 	versionCommit                 string
 	versionFileData               []byte
+	versionFieldFileData          []byte
+	resourceWatchSet              sets.Set[string]
 	additionalVersionsFile        string
 	directory                     string
 	outputFormat                  string
@@ -213,6 +217,12 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		defaultField, err := api.NewVersionFieldsFromYAML(versionFieldFileData)
+		if err != nil {
+			return err
+		}
+		resourceWatchSet = defaultField.GetFieldAllResources()
+		klog.V(5).Info("wait watch resource set %v", resourceWatchSet)
 		var deprecatedVersionList []api.Version
 		if additionalVersionsFile != "" {
 			klog.V(2).Infof("looking for versions file: %s", additionalVersionsFile)
@@ -296,6 +306,7 @@ var rootCmd = &cobra.Command{
 			OnlyShowRemoved:               onlyShowRemoved,
 			NoHeaders:                     noHeaders,
 			DeprecatedVersions:            deprecatedVersionList,
+			DeprecatedField:               defaultField,
 			Components:                    componentList,
 		}
 
@@ -468,10 +479,11 @@ var listVersionsCmd = &cobra.Command{
 }
 
 // Execute the stuff
-func Execute(VERSION string, COMMIT string, versionsFile []byte) {
+func Execute(VERSION string, COMMIT string, versionsFile []byte, versionFieldFile []byte) {
 	version = VERSION
 	versionCommit = COMMIT
 	versionFileData = versionsFile
+	versionFieldFileData = versionFieldFile
 	if err := rootCmd.Execute(); err != nil {
 		klog.Error(err)
 		os.Exit(1)
@@ -498,6 +510,12 @@ func detectAPIResources() error {
 	err = disCl.GetApiResources()
 	if err != nil {
 		return fmt.Errorf("Error getting API resources using discovery client: %v", err)
+	}
+	disFCl, err := discoveryresourcefield.NewDiscoveryResourceFieldClient(namespace, kubeContext, apiInstance, kubeConfigPath, resourceWatchSet)
+	klog.V(2).Info("Init discovery  field client")
+	err = disFCl.GetApiResources()
+	if err != nil {
+		return fmt.Errorf("Error getting API resources using discovery field client: %v", err)
 	}
 	return nil
 }

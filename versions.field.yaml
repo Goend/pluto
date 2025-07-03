@@ -1,0 +1,213 @@
+# service.kubernetes.io/topology-aware-hints: 值从 auto -> Auto, disabled -> Disabled
+- name: TopologyHintsValueDeprecated
+  kind: Service
+  resource: services
+  match:
+    expression: has(object.metadata.annotations) && object.metadata.annotations.exists(c,c=='service.kubernetes.io/topology-aware-hints') && (object.metadata.annotations['service.kubernetes.io/topology-aware-hints'] == "auto" || object.metadata.annotations['service.kubernetes.io/topology-aware-hints']=="disabled")
+  message: "'service.kubernetes.io/topology-aware-hints' 使用了已废弃的值，应改为 'Auto' 或 'Disabled'"
+  deprecated-in: v1.22
+  removed-in: ""
+  replacement-field: "'Auto' 或 'Disabled'（值）"
+  replacement-available-in: v1.22
+
+# service.alpha.kubernetes.io/tolerate-unready-endpoints -> .spec.publishNotReadyAddresses
+- name: TolerateUnreadyAnnotationDeprecated
+  kind: Service
+  resource: services
+  match:
+    expression: has(object.metadata.annotations) && object.metadata.annotations.exists(c,c=='service.alpha.kubernetes.io/tolerate-unready-endpoints') && (object.spec.publishNotReadyAddresses == 'false'|| !has(object.spec.publishNotReadyAddresses))
+  message: "使用了废弃的 annotation，应改用 .spec.publishNotReadyAddresses 字段"
+  deprecated-in: v1.11
+  removed-in: v1.24
+  replacement-field: ".spec.publishNotReadyAddresses"
+  replacement-available-in: v1.11
+
+# .spec.loadBalancerIP 已废弃（但尚未移除）
+- name: LoadBalancerIPDeprecated
+  kind: Service
+  resource: services
+  match:
+    expression: has(object.spec.loadBalancerIP) && object.spec.loadBalancerIP != ''
+  message: "字段 .spec.loadBalancerIP 已废弃，未来版本可能移除"
+  deprecated-in: v1.24
+  removed-in: ""
+  replacement-field: ""
+  replacement-available-in: ""
+
+# kubectl.kubernetes.io/default-logs-container -> kubectl.kubernetes.io/default-container
+- name: DefaultLogsContainerDeprecated_Pod
+  kind: Pod
+  resource: pods
+  match:
+    expression: has(object.metadata.annotations) && object.metadata.annotations.exists(c,c=='kubectl.kubernetes.io/default-logs-container') && !object.metadata.annotations.exists(c,c=='kubectl.kubernetes.io/default-container')
+  message: "annotation 'default-logs-container' 已废弃，建议使用 'default-container' 替代"
+  deprecated-in: v1.21
+  removed-in: v1.25
+  replacement-field: ".metadata.annotations['kubectl.kubernetes.io/default-container']"
+  replacement-available-in: v1.21
+
+# kubectl.kubernetes.io/default-logs-container -> kubectl.kubernetes.io/default-container
+- name: DefaultLogsContainerDeprecated_Deployment
+  kind: Deployment
+  resource: deployments
+  match:
+    expression: has(object.spec.template.metadata.annotations) && object.spec.template.metadata.annotations.exists(c,c=='kubectl.kubernetes.io/default-logs-container') && !object.spec.template.metadata.annotations.exists(c,c=='kubectl.kubernetes.io/default-container')
+  message: "annotation 'default-logs-container' 已废弃，建议使用 'default-container' 替代"
+  deprecated-in: v1.21
+  removed-in: v1.25
+  replacement-field: ".spec.template.metadata.annotations['kubectl.kubernetes.io/default-container']"
+  replacement-available-in: v1.21
+
+# kubectl.kubernetes.io/default-logs-container -> kubectl.kubernetes.io/default-container
+- name: DefaultLogsContainerDeprecated_StatefulSet
+  kind: Statefulset
+  resource: statefulsets
+  match:
+    expression: has(object.spec.template.metadata.annotations) && object.spec.template.metadata.annotations.exists(c,c=='kubectl.kubernetes.io/default-logs-container') && !object.spec.template.metadata.annotations.exists(c,c=='kubectl.kubernetes.io/default-container')
+  message: "annotation 'default-logs-container' 已废弃，建议使用 'default-container' 替代"
+  deprecated-in: v1.21
+  removed-in: v1.25
+  replacement-field: ".spec.template.metadata.annotations['kubectl.kubernetes.io/default-container']"
+  replacement-available-in: v1.21
+
+# kubectl.kubernetes.io/default-logs-container -> kubectl.kubernetes.io/default-container
+- name: DefaultLogsContainerDeprecated_DaemonSet
+  kind: Daemonset
+  resource: daemonsets
+  match:
+    expression: has(object.spec.template.metadata.annotations) && object.spec.template.metadata.annotations.exists(c,c=='kubectl.kubernetes.io/default-logs-container') && !object.spec.template.metadata.annotations.exists(c,c=='kubectl.kubernetes.io/default-container')
+  message: "annotation 'default-logs-container' 已废弃，建议使用 'default-container' 替代"
+  deprecated-in: v1.21
+  removed-in: v1.25
+  replacement-field: ".spec.template.metadata.annotations['kubectl.kubernetes.io/default-container']"
+  replacement-available-in: v1.21
+
+# container.seccomp.security.alpha.kubernetes.io/* 废弃 -> 使用 seccompProfile
+- name: SeccompAlphaAnnotationDeprecated_Pod
+  kind: Pod
+  resource: pods
+  match:
+    expression: has(object.metadata.annotations) && (object.metadata.annotations.exists(c, c.startsWith('container.seccomp.security.alpha.kubernetes.io/')) || object.metadata.annotations.exists(c,c.startsWith('seccomp.security.alpha.kubernetes.io/pod')))
+  message: "已废弃 seccomp alpha annotation，应使用 securityContext.seccompProfile 字段"
+  deprecated-in: v1.19
+  removed-in: v1.25
+  replacement-field: ".spec.securityContext.seccompProfile 或 .spec.containers[*].securityContext.seccompProfile"
+  replacement-available-in: v1.19
+
+# container.seccomp.security.alpha.kubernetes.io/* 废弃 -> 使用 seccompProfile
+- name: SeccompAlphaAnnotationDeprecated_Deployment
+  kind: Deployment
+  resource: deployments
+  match:
+    expression: has(object.spec.template.metadata.annotations) && (object.spec.template.metadata.annotations.exists(c, c.startsWith('container.seccomp.security.alpha.kubernetes.io/')) || object.spec.template.metadata.annotations.exists(c,c.startsWith('seccomp.security.alpha.kubernetes.io/pod')))
+  message: "已废弃 seccomp alpha annotation，应使用 securityContext.seccompProfile 字段"
+  deprecated-in: v1.19
+  removed-in: v1.25
+  replacement-field: ".spec.template.spec.securityContext.seccompProfile 或 .spec.template.spec.containers[*].securityContext.seccompProfile"
+  replacement-available-in: v1.19
+
+# container.seccomp.security.alpha.kubernetes.io/* 废弃 -> 使用 seccompProfile
+- name: SeccompAlphaAnnotationDeprecated_StatefulSet
+  kind: Statefulset
+  resource: statefulsets
+  match:
+    expression: has(object.spec.template.metadata.annotations) && (object.spec.template.metadata.annotations.exists(c, c.startsWith('container.seccomp.security.alpha.kubernetes.io/')) || object.spec.template.metadata.annotations.exists(c,c.startsWith('seccomp.security.alpha.kubernetes.io/pod')))
+  message: "已废弃 seccomp alpha annotation，应使用 securityContext.seccompProfile 字段"
+  deprecated-in: v1.19
+  removed-in: v1.25
+  replacement-field: ".spec.template.spec.securityContext.seccompProfile 或 .spec.template.spec.containers[*].securityContext.seccompProfile"
+  replacement-available-in: v1.19
+
+# container.seccomp.security.alpha.kubernetes.io/* 废弃 -> 使用 seccompProfile
+- name: SeccompAlphaAnnotationDeprecated_DaemonSet
+  kind: Daemonset
+  resource: daemonsets
+  match:
+    expression: has(object.spec.template.metadata.annotations) && (object.spec.template.metadata.annotations.exists(c, c.startsWith('container.seccomp.security.alpha.kubernetes.io/')) || object.spec.template.metadata.annotations.exists(c,c.startsWith('seccomp.security.alpha.kubernetes.io/pod')))
+  message: "已废弃 seccomp alpha annotation，应使用 securityContext.seccompProfile 字段"
+  deprecated-in: v1.19
+  removed-in: v1.25
+  replacement-field: ".spec.template.spec.securityContext.seccompProfile 或 .spec.template.spec.containers[*].securityContext.seccompProfile"
+  replacement-available-in: v1.19
+
+
+# service.kubernetes.io/topology-aware-hints key 废弃 -> topology-mode
+- name: TopologyHintsKeyDeprecated
+  kind: Service
+  resource: services
+  match:
+    expression: has(object.metadata.annotations) && object.metadata.annotations.exists(c,c.startsWith('service.kubernetes.io/topology-aware-hints')) && !object.metadata.annotations.exists(c,c.startsWith('service.kubernetes.io/topology-mode'))
+  message: "'topology-aware-hints' key 已废弃，建议使用 'topology-mode' 替代"
+  deprecated-in: v1.27
+  removed-in: ""
+  replacement-field: ".metadata.annotations['service.kubernetes.io/topology-mode']"
+  replacement-available-in: v1.27
+
+# ingress.kubernetes.io/limit-whitelist -> limit-allowlist 或 nginx.ingress.kubernetes.io/limit-whitelist
+- name: IngressLimitWhitelistDeprecated
+  kind: Ingress
+  resource: ingresses
+  match:
+    expression: has(object.metadata.annotations) && object.metadata.annotations.exists(c,c.startsWith('ingress.kubernetes.io/limit-whitelist'))
+  message: "annotation 'limit-whitelist' 已废弃，建议使用 nginx.ingress.kubernetes.io/limit-whitelist 或 limit-allowlist"
+  deprecated-in: ""
+  removed-in: v1.28
+  replacement-field: ".metadata.annotations['nginx.ingress.kubernetes.io/limit-whitelist'] 或 .metadata.annotations['ingress.kubernetes.io/limit-allowlist']"
+  replacement-available-in: ""
+
+# ingress.kubernetes.io/whitelist-source-range -> allowlist-source-range 或 nginx.ingress.kubernetes.io/whitelist-source-range
+- name: IngressWhitelistSourceRangeDeprecated
+  kind: Ingress
+  resource: ingresses
+  match:
+    expression: has(object.metadata.annotations) && object.metadata.annotations.exists(c,c.startsWith('ingress.kubernetes.io/whitelist-source-range'))
+  message: "annotation 'whitelist-source-range' 已废弃，建议使用 nginx.ingress.kubernetes.io/whitelist-source-range 或 allowlist-source-range"
+  deprecated-in: ""
+  removed-in: v1.28
+  replacement-field: ".metadata.annotations['nginx.ingress.kubernetes.io/whitelist-source-range'] 或 .metadata.annotations['ingress.kubernetes.io/allowlist-source-range']"
+  replacement-available-in: ""
+
+# fake ingress
+- name: IngressFakeCustomHttpDeprecated
+  kind: Ingress
+  resource: ingresses
+  match:
+    expression: has(object.metadata.annotations) && object.metadata.annotations.exists(c,c.startsWith('ingress.kubernetes.io/custom-http-errors'))
+  message: "annotation 'ingress.kubernetes.io/custom-http-errors'' 已废弃，建议使用 nginx.ingress.kubernetes.io/fake 或 fakeother"
+  deprecated-in: v1.28
+  removed-in: v1.32
+  replacement-field: ".metadata.annotations['nginx.ingress.kubernetes.io/fake'] 或 .metadata.annotations['ingress.kubernetes.io/fakeother']"
+  replacement-available-in: v1.28
+
+- name: PersistentVolumeMountOptionsDeprecated
+  kind: PersistentVolume
+  resource: persistentvolumes
+  match:
+    expression: has(object.metadata.annotations) && object.metadata.annotations.exists(c,c.startsWith('volume.beta.kubernetes.io/mount-options'))
+  message: "annotation 'volume.beta.kubernetes.io/mount-options'' 已废弃，建议使用 'mountOptions' attribute instead"
+  deprecated-in: v1.31
+  removed-in: ""
+  replacement-field: ".spec.mountOptions"
+  replacement-available-in: v1.8
+
+- name: ServiceAccountEnforceMountableSecretsAnnotationDeprecated
+  kind: ServiceAccount
+  resource: serviceaccounts
+  match:
+    expression: has(object.metadata.annotations) && object.metadata.annotations.exists(c,c.startsWith('kubernetes.io/enforce-mountable-secrets'))
+  message: "annotation 'kubernetes.io/enforce-mountable-secrets'' 已废弃，建议使用拆分为单独的命名空间需要实现隔离"
+  deprecated-in: v1.32
+  removed-in: ""
+  replacement-field: ""
+  replacement-available-in: ""
+
+- name: IngressGlobalrateRemoved
+  kind: Ingress
+  resource: ingresses
+  match:
+    expression: has(object.metadata.annotations) && (object.metadata.annotations.exists(c,c.endsWith('ingress.kubernetes.io/global-rate-limit')) || object.metadata.annotations.exists(c,c.endsWith('ingress.kubernetes.io/global-rate-limit-key')) || object.metadata.annotations.exists(c,c.endsWith('ingress.kubernetes.io/global-rate-limit-window')) || object.metadata.annotations.exists(c,c.endsWith('ingress.kubernetes.io/global-rate-limit-ignored-cidrs')))
+  message: "ingress annotation全局限速配置已废弃，建议使用其他方式实现"
+  deprecated-in: v1.32
+  removed-in: v1.32
+  replacement-field: ""
+  replacement-available-in: v1.32

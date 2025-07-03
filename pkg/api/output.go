@@ -23,6 +23,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/olekukonko/tablewriter"
+	"k8s.io/klog/v2"
 
 	"gopkg.in/yaml.v3"
 )
@@ -41,12 +42,18 @@ type Output struct {
 	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 	// APIVersion is the version object corresponding to this output
 	APIVersion *Version `json:"api,omitempty" yaml:"api,omitempty"`
+	// Cels are the cel of versions.field.yaml which not pass the eval action
+	Cels MatchExpression `json:"cels,omitempty" yaml:"cels,omitempty"`
 	// Deprecated is a boolean indicating whether or not the version is deprecated
 	Deprecated bool `json:"deprecated" yaml:"deprecated"`
 	// Removed is a boolean indicating whether or not the version has been removed
 	Removed bool `json:"removed" yaml:"removed"`
 	// ReplacementAvailable is a boolean indicating whether or not the replacement is available
 	ReplacementAvailable bool `json:"replacementAvailable" yaml:"replacementAvailable"`
+	// Messages are warning informations about resource
+	Messages string `json:"messages" yaml:"messages"`
+	// FieldVersion is the field object corresponding to this output
+	FieldVersions VersionFieldStatus `json:"fields" yaml:"fields"`
 	// CustomColumns is a list of column headers to be displayed with -ocustom or -omarkdown
 	CustomColumns []string `json:"-" yaml:"-"`
 }
@@ -62,6 +69,7 @@ type Instance struct {
 	OutputFormat                  string            `json:"-" yaml:"-"`
 	TargetVersions                map[string]string `json:"target-versions,omitempty" yaml:"target-versions,omitempty"`
 	DeprecatedVersions            []Version         `json:"-" yaml:"-"`
+	DeprecatedField               []VersionField    `json:"-" yaml:"-"`
 	CustomColumns                 []string          `json:"-" yaml:"-"`
 	Components                    []string          `json:"-" yaml:"-"`
 }
@@ -71,6 +79,9 @@ func (instance *Instance) DisplayOutput() error {
 	if len(instance.Outputs) == 0 && (instance.OutputFormat == "normal" || instance.OutputFormat == "wide") {
 		fmt.Println("There were no resources found with known deprecated apiVersions.")
 		return nil
+	}
+	for k, _ := range instance.Outputs {
+		klog.V(5).Infof("no filter output:%v", *instance.Outputs[k])
 	}
 
 	instance.FilterOutput()
@@ -156,6 +167,11 @@ func (instance *Instance) DisplayOutput() error {
 func (instance *Instance) FilterOutput() {
 	var usableOutputs []*Output
 	for _, output := range instance.Outputs {
+		if output.Cels.Expression != "" {
+			// cel eval continue to append
+			usableOutputs = append(usableOutputs, output)
+			continue
+		}
 		output.Deprecated = output.APIVersion.isDeprecatedIn(instance.TargetVersions)
 		output.Removed = output.APIVersion.isRemovedIn(instance.TargetVersions)
 		output.ReplacementAvailable = output.APIVersion.isReplacementAvailableIn(instance.TargetVersions)
@@ -309,6 +325,20 @@ func (instance *Instance) GetReturnCode() int {
 	var removals int
 	var unavailableReplacements int
 	for _, output := range instance.Outputs {
+		// deal with field version check
+		if output.Cels.Expression != "" {
+			if output.FieldVersions.Deprecated {
+				deprecations = deprecations + 1
+			}
+			if output.FieldVersions.Removed {
+				removals = removals + 1
+			}
+			if !output.FieldVersions.ReplacementAvailable {
+				unavailableReplacements = unavailableReplacements + 1
+			}
+			continue
+		}
+		// deal with api resource
 		if output.APIVersion.isRemovedIn(instance.TargetVersions) {
 			removals = removals + 1
 		}
